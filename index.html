@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Signal — Market Intelligence</title>
+  <title>Signal — AI Chart Builder</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -474,6 +474,53 @@
     .empty-state h2 { font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--text); opacity: 0.3; }
     .empty-state p { font-size: 13px; opacity: 0.5; text-align: center; max-width: 280px; line-height: 1.6; }
 
+    /* ── Onboarding hint ── */
+    #onboarding {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      z-index: 200;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      animation: fadeIn 0.4s ease;
+      white-space: nowrap;
+    }
+    .onb-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .onb-step .onb-n {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--border);
+      color: var(--text);
+      font-size: 10px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .onb-step:nth-child(1) .onb-n { background: var(--c0); color: var(--bg); }
+    .onb-step:nth-child(3) .onb-n { background: var(--c1); color: var(--bg); }
+    .onb-step:nth-child(5) .onb-n { background: var(--c2); color: var(--bg); }
+    .onb-divider { width: 1px; height: 20px; background: var(--border); }
+    .onb-dismiss {
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; font-size: 16px; padding: 0 0 0 8px;
+      transition: color 0.15s;
+    }
+    .onb-dismiss:hover { color: var(--text); }
+    @keyframes onbOut { to { opacity: 0; transform: translateX(-50%) translateY(10px); } }
+
     .chart-card {
       background: var(--surface1);
       border: 1px solid var(--border);
@@ -670,7 +717,7 @@
 
 <header>
   <div class="logo">Signal</div>
-  <div class="tagline">// market intelligence unified</div>
+  <div class="tagline">// paste sources → extract data → build charts</div>
   <div class="spacer"></div>
   <button class="add-source-btn" id="setApiKeyBtn" title="Store your Anthropic API key in this browser">Set API Key</button>
   <button class="add-source-btn" id="addSourceBtn">+ Add Source</button>
@@ -762,6 +809,15 @@
 </div>
 
 <div id="toast-container"></div>
+
+<div id="onboarding" style="display:none">
+  <div class="onb-step"><div class="onb-n">1</div> Add a source & paste text or upload an image</div>
+  <div class="onb-divider"></div>
+  <div class="onb-step"><div class="onb-n">2</div> Extract data points with AI</div>
+  <div class="onb-divider"></div>
+  <div class="onb-step"><div class="onb-n">3</div> Generate unified chart</div>
+  <button class="onb-dismiss" id="onbDismiss" title="Dismiss">×</button>
+</div>
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────────────────
@@ -1703,6 +1759,19 @@ document.getElementById("setApiKeyBtn").addEventListener("click", () => {
 });
 document.getElementById("addSourceBtn").addEventListener("click", addSource);
 addSource(); // Start with one source
+
+// ── ONBOARDING ────────────────────────────────────────────────────────────────
+if (!localStorage.getItem("signal.onboarding.dismissed")) {
+  const onb = document.getElementById("onboarding");
+  onb.style.display = "flex";
+  const dismiss = () => {
+    onb.style.animation = "onbOut 0.3s ease forwards";
+    setTimeout(() => onb.remove(), 300);
+    localStorage.setItem("signal.onboarding.dismissed", "1");
+  };
+  document.getElementById("onbDismiss").addEventListener("click", dismiss);
+  setTimeout(dismiss, 7000); // auto-dismiss after 7s
+}
 </script>
 </body>
 </html>
