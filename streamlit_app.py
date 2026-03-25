@@ -116,11 +116,13 @@ def interpolate(points, years, mode):
 
 # ── AI analysis ────────────────────────────────────────────────────────────────
 def generate_analysis(active_sources, interp_label, view_mode, metric, unit):
-    summary = "\n".join(
-        f"- {s['publisher'] or s['name']} {('\"'+s['article_title']+'\"') if s['article_title'] else ''}: "
-        f"{', '.join(f'{p[\"year\"]}: {p[\"value\"]}{p[\"unit\"]}' for p in s['points'])}"
-        for s in active_sources
-    )
+    lines = []
+    for s in active_sources:
+        pts = ", ".join(str(p["year"]) + ": " + str(p["value"]) + str(p["unit"]) for p in s["points"])
+        pub = s["publisher"] or s["name"]
+        art = ('"' + s["article_title"] + '"') if s["article_title"] else ""
+        lines.append(f"- {pub} {art}: {pts}")
+    summary = "\n".join(lines)
     mode_label = "unified single line" if view_mode == "unified" else "one line per source"
     resp = get_client().messages.create(
         model=MODEL, max_tokens=300,
