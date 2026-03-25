@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Signal — Market Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f12;
+      --surface1: #161920;
+      --surface2: #1e2229;
+      --border: #2a2f3a;
+      --text: #e8eaf0;
+      --muted: #7a8090;
+      --c0: #c8f060;
+      --c1: #60c8f0;
+      --c2: #f060c8;
+      --c3: #f8b450;
+      --accent: #c8f060;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 14px;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #main {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* ── Header ── */
+    header {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface1);
+      z-index: 10;
+    }
+    header .logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+    }
+    header .tagline {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+    }
+    header .spacer { flex: 1; }
+    header .add-source-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 12px;
+      padding: 5px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    header .add-source-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      background: var(--surface1);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      width: 420px;
+      flex-shrink: 0;
+      min-height: 0;
+    }
+
+    #sources-container {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* ── Source Card ── */
+    .source-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+      flex-shrink: 0;
+    }
+    .source-card.active { border-color: var(--source-color, var(--accent)); }
+
+    .source-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px 8px;
+    }
+    .source-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--source-color, var(--accent));
+      flex-shrink: 0;
+    }
+    .source-name-input {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      outline: none;
+    }
+    .source-name-input::placeholder { color: var(--muted); }
+    .remove-source-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: color 0.15s;
+    }
+    .remove-source-btn:hover { color: #f06060; }
+
+    .mode-toggle {
+      display: flex;
+      margin: 0 12px 8px;
+      background: var(--bg);
+      border-radius: 6px;
+      padding: 3px;
+      gap: 3px;
+    }
+    .mode-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 0;
+      border-radius: 4px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .mode-btn.active { background: var(--surface2); color: var(--text); }
+
+    .source-input-area { padding: 0 12px 10px; }
+
+    textarea.text-input {
+      width: 100%;
+      min-height: 90px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      padding: 8px 10px;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    textarea.text-input:focus { border-color: var(--source-color, var(--accent)); }
+    textarea.text-input::placeholder { color: var(--muted); }
+
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+      min-height: 90px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+    .drop-zone:hover, .drop-zone.drag-over { border-color: var(--source-color, var(--accent)); background: rgba(200,240,96,0.04); }
+    .drop-zone .drop-icon { font-size: 24px; opacity: 0.5; }
+    .drop-zone .drop-label { font-size: 12px; color: var(--muted); }
+    .drop-zone .drop-sub { font-size: 11px; color: var(--muted); opacity: 0.6; }
+    .drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .drop-zone .preview-img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      position: absolute;
+      inset: 0;
+      border-radius: 4px;
+    }
+    .drop-zone .preview-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(13,15,18,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: var(--text);
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .drop-zone:hover .preview-overlay { opacity: 1; }
+
+    .extract-btn {
+      width: 100%;
+      margin-top: 8px;
+      background: var(--source-color, var(--accent));
+      border: none;
+      border-radius: 6px;
+      color: var(--bg);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 12px;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .extract-btn:hover { opacity: 0.9; }
+    .extract-btn:active { transform: scale(0.98); }
+    .extract-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .extract-btn .spinner {
+      width: 12px; height: 12px;
+      border: 2px solid rgba(13,15,18,0.4);
+      border-top-color: var(--bg);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .tags-area {
+      padding: 0 12px 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .data-tag {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 8px 3px 10px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text);
+      cursor: default;
+      animation: fadeIn 0.2s ease;
+    }
+    .data-tag .tag-year { color: var(--source-color, var(--accent)); font-weight: 500; }
+    .data-tag .tag-val { color: var(--text); }
+    .data-tag .tag-label { color: var(--muted); max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .data-tag .tag-edit-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 11px;
+      line-height: 1;
+      padding: 0 2px;
+      opacity: 0;
+      transition: opacity 0.15s, color 0.15s;
+    }
+    .data-tag:hover .tag-edit-btn { opacity: 1; }
+    .data-tag .tag-edit-btn:hover { color: var(--source-color, var(--accent)); }
+    .data-tag .tag-remove {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 13px;
+      line-height: 1;
+      padding: 0 2px;
+      transition: color 0.15s;
+    }
+    .data-tag .tag-remove:hover { color: #f06060; }
+
+    /* ── Tag Editor Popover ── */
+    .tag-editor {
+      position: fixed;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 500;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      min-width: 220px;
+      animation: fadeIn 0.15s ease;
+    }
+    .tag-editor-row { display: flex; gap: 6px; }
+    .tag-editor label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); display: block; margin-bottom: 3px; }
+    .tag-editor input, .tag-editor select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      padding: 5px 7px;
+      outline: none;
+    }
+    .tag-editor input:focus, .tag-editor select:focus { border-color: var(--accent); }
+    .tag-editor-actions { display: flex; gap: 6px; margin-top: 2px; }
+    .tag-editor-save {
+      flex: 1;
+      background: var(--accent);
+      border: none;
+      border-radius: 5px;
+      color: var(--bg);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px;
+      cursor: pointer;
+    }
+    .tag-editor-cancel {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--muted);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 12px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+
+    /* ── Chart Config ── */
+    #chart-config {
+      flex-shrink: 0;
+      border-top: 1px solid var(--border);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #chart-config .config-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .config-row { display: flex; gap: 8px; }
+    .config-group { flex: 1; display: flex; flex-direction: column; }
+
+    input[type=text].config-input,
+    select.config-select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 12px;
+      padding: 6px 8px;
+      outline: none;
+      width: 100%;
+      transition: border-color 0.15s;
+    }
+    input[type=text].config-input:focus,
+    select.config-select:focus { border-color: var(--accent); }
+    select.config-select { cursor: pointer; }
+
+    .chart-type-row {
+      display: flex;
+      gap: 6px;
+    }
+    .chart-type-btn {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+      text-align: center;
+    }
+    .chart-type-btn.active { border-color: var(--accent); color: var(--accent); }
+
+    .generate-btn {
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: var(--bg);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 10px;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .generate-btn:hover { opacity: 0.9; }
+    .generate-btn:active { transform: scale(0.98); }
+    .generate-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .generate-btn .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(13,15,18,0.4);
+      border-top-color: var(--bg);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    /* ── Chart Area ── */
+    #chart-area {
+      background: var(--bg);
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      gap: 20px;
+    }
+
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--muted);
+    }
+    .empty-state .big-icon { font-size: 48px; opacity: 0.3; }
+    .empty-state h2 { font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--text); opacity: 0.3; }
+    .empty-state p { font-size: 13px; opacity: 0.5; text-align: center; max-width: 280px; line-height: 1.6; }
+
+    .chart-card {
+      background: var(--surface1);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .chart-card-header {
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .chart-card-header h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      line-height: 1.2;
+      flex: 1;
+    }
+    .chart-subtitle {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+      letter-spacing: 0.3px;
+    }
+    .chart-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+      align-items: center;
+    }
+    .chart-action-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+    .chart-action-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .chart-action-btn.theme-light { background: #f5f5f5; border-color: #ddd; color: #333; }
+    .chart-action-btn.theme-light:hover { border-color: #999; }
+
+    .chart-canvas-wrap {
+      padding: 20px;
+      position: relative;
+    }
+    canvas#myChart {
+      max-height: 380px;
+    }
+
+    .insight-strip {
+      margin: 0 20px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--c1);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 13px;
+      line-height: 1.65;
+      color: var(--muted);
+      animation: fadeIn 0.5s ease 0.1s both;
+    }
+    .insight-strip strong { color: var(--text); }
+
+    .source-meta {
+      padding: 0 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .source-meta-row { display: flex; gap: 5px; }
+    .source-meta input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 11px;
+      padding: 5px 8px;
+      outline: none;
+      width: 100%;
+      transition: border-color 0.15s;
+    }
+    .source-meta input:focus { border-color: var(--source-color, var(--accent)); }
+    .source-meta input::placeholder { color: var(--muted); }
+    .source-meta-row input:first-child { flex: 0 0 110px; }
+    .source-meta-row input:last-child { flex: 1; }
+
+    .citations-block {
+      margin: 0 20px 0;
+    }
+    .citations-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .citations-title {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+    }
+    .copy-citations-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--muted);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 11px;
+      padding: 3px 9px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .copy-citations-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .citation-list { display: flex; flex-direction: column; gap: 6px; }
+    .citation-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      animation: fadeIn 0.4s ease;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .citation-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+    .citation-body { flex: 1; min-width: 0; }
+    .citation-apa {
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.65;
+    }
+    .citation-apa em { font-style: italic; }
+    .citation-points {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.8;
+    }
+
+    /* ── Toasts ── */
+    #toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 1000;
+    }
+    .toast {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      animation: toastIn 0.25s ease;
+      max-width: 320px;
+    }
+    .toast.success { border-left: 3px solid var(--c0); }
+    .toast.error { border-left: 3px solid #f06060; }
+    .toast.info { border-left: 3px solid var(--c1); }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateX(12px); } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Signal</div>
+  <div class="tagline">// market intelligence unified</div>
+  <div class="spacer"></div>
+  <button class="add-source-btn" id="setApiKeyBtn" title="Store your Anthropic API key in this browser">Set API Key</button>
+  <button class="add-source-btn" id="addSourceBtn">+ Add Source</button>
+</header>
+
+<div id="main">
+<div id="sidebar">
+  <div id="sources-container"></div>
+
+  <div id="chart-config">
+    <div>
+      <div class="config-label">Chart Title</div>
+      <input type="text" class="config-input" id="chartTitle" placeholder="e.g. Global AI Market Size 2020–2030" />
+    </div>
+
+    <div class="config-row">
+      <div class="config-group">
+        <div class="config-label">Year From</div>
+        <input type="number" class="config-input" id="yearFrom" placeholder="auto" min="1900" max="2100" />
+      </div>
+      <div class="config-group">
+        <div class="config-label">Year To</div>
+        <input type="number" class="config-input" id="yearTo" placeholder="auto" min="1900" max="2100" />
+      </div>
+    </div>
+
+    <div class="config-row">
+      <div class="config-group">
+        <div class="config-label">Metric Type</div>
+        <select class="config-select" id="metricType">
+          <option value="market_size">Market Size</option>
+          <option value="growth_rate">Growth Rate</option>
+          <option value="revenue">Revenue</option>
+          <option value="users">Users</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+      <div class="config-group">
+        <div class="config-label">Unit Scale</div>
+        <select class="config-select" id="unitScale">
+          <option value="B">Billions ($B)</option>
+          <option value="M">Millions ($M)</option>
+          <option value="T">Trillions ($T)</option>
+          <option value="pct">Percentage (%)</option>
+          <option value="raw">Raw</option>
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <div class="config-label">Interpolation</div>
+      <select class="config-select" id="interpMode">
+        <option value="linear">Linear Interpolation</option>
+        <option value="cagr">CAGR Projection</option>
+        <option value="raw">Raw Data Only</option>
+      </select>
+    </div>
+
+    <div>
+      <div class="config-label">View Mode</div>
+      <div class="chart-type-row">
+        <button class="chart-type-btn active" data-mode="unified">Unified</button>
+        <button class="chart-type-btn" data-mode="compare">Compare</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="config-label">Chart Type</div>
+      <div class="chart-type-row">
+        <button class="chart-type-btn active" data-type="line">Line</button>
+        <button class="chart-type-btn" data-type="bar">Bar</button>
+        <button class="chart-type-btn" data-type="scatter">Scatter</button>
+      </div>
+    </div>
+
+    <button class="generate-btn" id="generateBtn">
+      <span>Generate Unified Chart</span>
+    </button>
+  </div>
+</div>
+
+<div id="chart-area">
+  <div class="empty-state" id="emptyState">
+    <div class="big-icon">📊</div>
+    <h2>No chart yet</h2>
+    <p>Add data sources on the left, extract market data with AI, then generate a unified chart.</p>
+  </div>
+</div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────────────────
+// API key is stored locally in your browser (localStorage). Use the "Set API Key" button.
+const API_KEY_STORAGE_KEY = "signal.anthropic_api_key";
+function getApiKey() {
+  return localStorage.getItem(API_KEY_STORAGE_KEY) || "";
+}
+function setApiKey(key) {
+  localStorage.setItem(API_KEY_STORAGE_KEY, key);
+}
+const MODEL   = "claude-sonnet-4-5";
+// Auto-detect: use relative URL in production (Vercel), localhost proxy in dev
+const API_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+  ? "API_URL"
+  : "/api/messages";
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+const SOURCE_COLORS = ["#c8f060","#60c8f0","#f060c8","#f8b450"];
+let sources = [];        // [{id, name, mode, text, imageBase64, imageMime, points:[]}]
+let nextId  = 1;
+let chartInstance = null;
+let chartType = "line";
+let viewMode = "unified";
+let chartTheme = "dark"; // "dark" | "light"
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function toast(msg, type = "info", duration = 3500) {
+  const el = document.createElement("div");
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  const container = document.getElementById("toast-container");
+  container.appendChild(el);
+  setTimeout(() => {
+    el.style.animation = "toastOut 0.25s ease forwards";
+    setTimeout(() => el.remove(), 250);
+  }, duration);
+}
+
+// ── SOURCES ───────────────────────────────────────────────────────────────────
+function addSource() {
+  if (sources.length >= 4) { toast("Maximum 4 sources allowed.", "error"); return; }
+  const id    = nextId++;
+  const color = SOURCE_COLORS[sources.length];
+  const src   = { id, color, name: `Source ${id}`, publisher: "", articleTitle: "", year: "", mode: "text", text: "", imageBase64: null, imageMime: null, points: [] };
+  sources.push(src);
+  renderSources();
+}
+
+function removeSource(id) {
+  sources = sources.filter(s => s.id !== id);
+  renderSources();
+}
+
+function renderSources() {
+  const container = document.getElementById("sources-container");
+  container.innerHTML = "";
+  sources.forEach(src => container.appendChild(buildSourceCard(src)));
+
+  // Re-attach add button visibility hint
+  document.getElementById("addSourceBtn").disabled = sources.length >= 4;
+}
+
+function buildSourceCard(src) {
+  const card = document.createElement("div");
+  card.className = "source-card";
+  card.dataset.id = src.id;
+  card.style.setProperty("--source-color", src.color);
+
+  // Header
+  const hdr = document.createElement("div");
+  hdr.className = "source-header";
+  hdr.innerHTML = `
+    <div class="source-dot"></div>
+    <input class="source-name-input" value="${esc(src.name)}" placeholder="Source name…" data-field="name" />
+    <button class="remove-source-btn" title="Remove source">×</button>
+  `;
+  hdr.querySelector("input").addEventListener("input", e => { src.name = e.target.value; });
+  hdr.querySelector(".remove-source-btn").addEventListener("click", () => removeSource(src.id));
+  card.appendChild(hdr);
+
+  // Source metadata (publisher + article title + year)
+  const meta = document.createElement("div");
+  meta.className = "source-meta";
+  meta.style.setProperty("--source-color", src.color);
+  meta.innerHTML = `
+    <div class="source-meta-row">
+      <input placeholder="Publisher (e.g. Gartner, IDC…)" value="${esc(src.publisher)}" data-meta="publisher" style="flex:1" />
+      <input placeholder="Year" value="${esc(src.year)}" data-meta="year" style="flex:0 0 72px;text-align:center" />
+    </div>
+    <input placeholder="Article / Report title" value="${esc(src.articleTitle)}" data-meta="articleTitle" />
+  `;
+  meta.querySelectorAll("input").forEach(inp => {
+    inp.addEventListener("input", e => { src[e.target.dataset.meta] = e.target.value; });
+  });
+  card.appendChild(meta);
+
+  // Mode toggle
+  const toggle = document.createElement("div");
+  toggle.className = "mode-toggle";
+  ["text","image"].forEach(m => {
+    const btn = document.createElement("button");
+    btn.className = "mode-btn" + (src.mode === m ? " active" : "");
+    btn.textContent = m === "text" ? "Text" : "Image";
+    btn.addEventListener("click", () => { src.mode = m; renderSources(); });
+    toggle.appendChild(btn);
+  });
+  card.appendChild(toggle);
+
+  // Input area
+  const inputArea = document.createElement("div");
+  inputArea.className = "source-input-area";
+
+  if (src.mode === "text") {
+    const ta = document.createElement("textarea");
+    ta.className = "text-input";
+    ta.placeholder = "Paste market research text, report excerpt, or data snippet…";
+    ta.value = src.text;
+    ta.style.setProperty("--source-color", src.color);
+    ta.addEventListener("input", e => { src.text = e.target.value; });
+    inputArea.appendChild(ta);
+  } else {
+    const dz = document.createElement("div");
+    dz.className = "drop-zone";
+
+    if (src.imageBase64) {
+      const img = document.createElement("img");
+      img.className = "preview-img";
+      img.src = `data:${src.imageMime};base64,${src.imageBase64}`;
+      dz.appendChild(img);
+      const ov = document.createElement("div");
+      ov.className = "preview-overlay";
+      ov.textContent = "Click to replace";
+      dz.appendChild(ov);
+    } else {
+      dz.innerHTML = `
+        <div class="drop-icon">🖼️</div>
+        <div class="drop-label">Drop image or click to browse</div>
+        <div class="drop-sub">PNG · JPG · WebP</div>
+      `;
+    }
+
+    const fi = document.createElement("input");
+    fi.type = "file";
+    fi.accept = "image/png,image/jpeg,image/webp";
+    fi.addEventListener("change", e => handleImageFile(src, e.target.files[0]));
+    dz.appendChild(fi);
+
+    dz.addEventListener("dragover", e => { e.preventDefault(); dz.classList.add("drag-over"); });
+    dz.addEventListener("dragleave", () => dz.classList.remove("drag-over"));
+    dz.addEventListener("drop", e => {
+      e.preventDefault();
+      dz.classList.remove("drag-over");
+      const file = e.dataTransfer.files[0];
+      if (file) handleImageFile(src, file);
+    });
+    inputArea.appendChild(dz);
+  }
+
+  // Extract button
+  const extractBtn = document.createElement("button");
+  extractBtn.className = "extract-btn";
+  extractBtn.style.setProperty("--source-color", src.color);
+  extractBtn.innerHTML = `<span>Extract Data with AI</span>`;
+  extractBtn.addEventListener("click", () => extractData(src, extractBtn));
+  inputArea.appendChild(extractBtn);
+
+  card.appendChild(inputArea);
+
+  // Tags
+  if (src.points.length > 0) {
+    const tagsArea = document.createElement("div");
+    tagsArea.className = "tags-area";
+    src.points.forEach((pt, i) => {
+      const tag = document.createElement("div");
+      tag.className = "data-tag";
+      tag.style.setProperty("--source-color", src.color);
+      tag.innerHTML = `
+        <span class="tag-year">${pt.year}</span>
+        <span class="tag-val">${formatVal(pt.value, pt.unit)}</span>
+        <span class="tag-label" title="${esc(pt.label)}">${esc(pt.label)}</span>
+        <button class="tag-edit-btn" title="Edit">✎</button>
+        <button class="tag-remove" title="Remove">×</button>
+      `;
+      tag.querySelector(".tag-remove").addEventListener("click", () => {
+        src.points.splice(i, 1);
+        renderSources();
+      });
+      tag.querySelector(".tag-edit-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        openTagEditor(src, i, tag);
+      });
+      tagsArea.appendChild(tag);
+    });
+    card.appendChild(tagsArea);
+  }
+
+  return card;
+}
+
+function openTagEditor(src, idx, anchorEl) {
+  // Remove any existing editor
+  document.querySelectorAll(".tag-editor").forEach(el => el.remove());
+
+  const pt = src.points[idx];
+  const rect = anchorEl.getBoundingClientRect();
+
+  const editor = document.createElement("div");
+  editor.className = "tag-editor";
+  editor.style.top  = `${rect.bottom + 6}px`;
+  editor.style.left = `${Math.min(rect.left, window.innerWidth - 240)}px`;
+
+  editor.innerHTML = `
+    <div class="tag-editor-row">
+      <div style="flex:1">
+        <label>Year</label>
+        <input id="te-year" type="number" value="${pt.year}" min="1900" max="2100" />
+      </div>
+      <div style="flex:1">
+        <label>Value</label>
+        <input id="te-value" type="number" step="any" value="${pt.value}" />
+      </div>
+      <div style="flex:0 0 70px">
+        <label>Unit</label>
+        <select id="te-unit">
+          <option value="B" ${pt.unit==="B"?"selected":""}>$B</option>
+          <option value="M" ${pt.unit==="M"?"selected":""}>$M</option>
+          <option value="T" ${pt.unit==="T"?"selected":""}>$T</option>
+          <option value="%" ${pt.unit==="%"?"selected":""}>%</option>
+          <option value="raw" ${pt.unit==="raw"?"selected":""}>raw</option>
+        </select>
+      </div>
+    </div>
+    <div>
+      <label>Label</label>
+      <input id="te-label" type="text" value="${esc(pt.label)}" maxlength="40" />
+    </div>
+    <div class="tag-editor-actions">
+      <button class="tag-editor-cancel">Cancel</button>
+      <button class="tag-editor-save">Save</button>
+    </div>
+  `;
+
+  document.body.appendChild(editor);
+
+  editor.querySelector(".tag-editor-save").addEventListener("click", () => {
+    src.points[idx] = {
+      year:  parseInt(editor.querySelector("#te-year").value)  || pt.year,
+      value: parseFloat(editor.querySelector("#te-value").value) ?? pt.value,
+      unit:  editor.querySelector("#te-unit").value,
+      label: editor.querySelector("#te-label").value.trim() || pt.label,
+    };
+    editor.remove();
+    renderSources();
+  });
+
+  editor.querySelector(".tag-editor-cancel").addEventListener("click", () => editor.remove());
+
+  // Close on outside click
+  setTimeout(() => {
+    document.addEventListener("click", function handler(e) {
+      if (!editor.contains(e.target)) { editor.remove(); document.removeEventListener("click", handler); }
+    });
+  }, 0);
+}
+
+function handleImageFile(src, file) {
+  if (!file) return;
+  if (!["image/png","image/jpeg","image/webp"].includes(file.type)) {
+    toast("Unsupported file type. Use PNG, JPG or WebP.", "error");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const result = e.target.result; // data:mime;base64,xxx
+    const b64 = result.split(",")[1];
+    src.imageBase64 = b64;
+    src.imageMime   = file.type;
+    renderSources();
+    toast("Image loaded.", "success", 1800);
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── AI EXTRACTION ─────────────────────────────────────────────────────────────
+async function extractData(src, btn) {
+  if (src.mode === "text" && !src.text.trim()) {
+    toast("Paste some text first.", "error"); return;
+  }
+  if (src.mode === "image" && !src.imageBase64) {
+    toast("Upload an image first.", "error"); return;
+  }
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    toast("Set your Anthropic API key (top bar → Set API Key).", "error"); return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spinner"></div><span>Extracting…</span>`;
+
+  const systemPrompt = `You are a market data extraction assistant. Extract ONLY the primary, directly-stated market data points from the provided content. Return ONLY valid JSON with no markdown fences, no commentary, no preamble.
+
+Rules:
+- Only extract data points that are the MAIN claim of a sentence, not supporting examples or contextual references buried inside a clause.
+- If a value is expressed as a range (e.g. "20% to 40%"), extract ONE point using the midpoint value and note the range in the label.
+- Do NOT extract data points that appear as subordinate examples (e.g. "for example, X by Y" or "such as X in Y").
+- Only include a year if it is clearly the forecast/reference year for that specific value.
+
+Schema: {"points":[{"year":2025,"value":22.8,"unit":"B","label":"short description max 5 words"}],"metric_name":"descriptive metric name","currency":"USD"}
+Units: B=billions, M=millions, T=trillions, %=percentage, raw=no unit.
+If no valid primary data points found, return {"points":[],"metric_name":"","currency":"USD"}.`;
+
+  let contentBlocks;
+  if (src.mode === "text") {
+    contentBlocks = [{ type: "text", text: src.text }];
+  } else {
+    contentBlocks = [
+      { type: "image", source: { type: "base64", media_type: src.imageMime, data: src.imageBase64 } },
+      { type: "text", text: "Extract all market data points with years and values from this image." }
+    ];
+  }
+
+  try {
+    const resp = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-calls": "true"
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: [{ role: "user", content: contentBlocks }]
+      })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${resp.status}`);
+    }
+
+    const data   = await resp.json();
+    const raw    = data.content?.[0]?.text || "";
+    const parsed = robustParse(raw);
+
+    if (!parsed || !parsed.points) throw new Error("Could not parse response JSON.");
+
+    const newPts = parsed.points.filter(p => p.year && p.value != null);
+    if (newPts.length === 0) {
+      toast("No data points found in the content.", "info");
+    } else {
+      // Merge, avoiding exact year duplicates
+      const existing = new Set(src.points.map(p => p.year));
+      let added = 0;
+      newPts.forEach(p => {
+        if (!existing.has(p.year)) { src.points.push(p); existing.add(p.year); added++; }
+      });
+      src.points.sort((a,b) => a.year - b.year);
+      if (parsed.metric_name && !document.getElementById("chartTitle").value) {
+        document.getElementById("chartTitle").value = parsed.metric_name;
+      }
+      toast(`Extracted ${added} data point${added !== 1 ? "s" : ""} from ${src.name}.`, "success");
+      renderSources();
+    }
+  } catch(e) {
+    console.error(e);
+    toast("Extraction error: " + e.message, "error", 5000);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span>Extract Data with AI</span>`;
+  }
+}
+
+function robustParse(raw) {
+  // Strip markdown fences
+  let cleaned = raw.replace(/^```[\w]*\n?/m,"").replace(/```$/m,"").trim();
+  try { return JSON.parse(cleaned); } catch(_) {}
+  // Regex fallback: find first {...}
+  const m = cleaned.match(/\{[\s\S]*\}/);
+  if (m) { try { return JSON.parse(m[0]); } catch(_) {} }
+  return null;
+}
+
+// ── INTERPOLATION + EXTRAPOLATION ────────────────────────────────────────────
+// All functions now extrapolate beyond known data using the trend at the edges.
+
+function interpolateLinear(points, years) {
+  const map = {};
+  points.forEach(p => { map[p.year] = p.value; });
+  const knownYears = points.map(p => p.year).sort((a,b) => a - b);
+  if (knownYears.length === 0) return years.map(() => null);
+
+  return years.map(y => {
+    if (map[y] != null) return map[y];
+
+    // Extrapolate before first known year
+    if (y < knownYears[0]) {
+      if (knownYears.length < 2) return map[knownYears[0]];
+      const y0 = knownYears[0], y1 = knownYears[1];
+      const slope = (map[y1] - map[y0]) / (y1 - y0);
+      return map[y0] + slope * (y - y0);
+    }
+
+    // Extrapolate after last known year
+    if (y > knownYears[knownYears.length - 1]) {
+      if (knownYears.length < 2) return map[knownYears[knownYears.length - 1]];
+      const y0 = knownYears[knownYears.length - 2], y1 = knownYears[knownYears.length - 1];
+      const slope = (map[y1] - map[y0]) / (y1 - y0);
+      return map[y1] + slope * (y - y1);
+    }
+
+    // Interpolate between two known years
+    const lo = knownYears.filter(ky => ky < y).pop();
+    const hi = knownYears.filter(ky => ky > y).shift();
+    const t = (y - lo) / (hi - lo);
+    return map[lo] + t * (map[hi] - map[lo]);
+  });
+}
+
+function interpolateCAGR(points, years) {
+  const sorted = [...points].sort((a,b) => a.year - b.year);
+  if (sorted.length === 0) return years.map(() => null);
+  if (sorted.length === 1) return years.map(() => sorted[0].value);
+
+  const first = sorted[0], last = sorted[sorted.length - 1];
+  const n = last.year - first.year;
+  const cagr = n > 0 ? Math.pow(last.value / first.value, 1 / n) - 1 : 0;
+
+  // Project from first anchor point in both directions
+  return years.map(y => first.value * Math.pow(1 + cagr, y - first.year));
+}
+
+function rawOnly(points, years) {
+  const map = {};
+  points.forEach(p => { map[p.year] = p.value; });
+  return years.map(y => map[y] ?? null);
+}
+
+// ── CHART GENERATION ──────────────────────────────────────────────────────────
+document.getElementById("generateBtn").addEventListener("click", generateChart);
+
+document.querySelectorAll("[data-type]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("[data-type]").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    chartType = btn.dataset.type;
+  });
+});
+
+document.querySelectorAll("[data-mode]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("[data-mode]").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    viewMode = btn.dataset.mode;
+  });
+});
+
+async function generateChart() {
+  const activeSources = sources.filter(s => s.points.length > 0);
+  if (activeSources.length === 0) {
+    toast("Extract data from at least one source first.", "error"); return;
+  }
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    toast("Set your Anthropic API key (top bar → Set API Key).", "error"); return;
+  }
+
+  const btn = document.getElementById("generateBtn");
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spinner"></div><span>Generating…</span>`;
+
+  // Build year range — use manual inputs if set, otherwise auto from data
+  const allYears = activeSources.flatMap(s => s.points.map(p => p.year));
+  const dataMinY = Math.min(...allYears), dataMaxY = Math.max(...allYears);
+  const fromInput = parseInt(document.getElementById("yearFrom").value);
+  const toInput   = parseInt(document.getElementById("yearTo").value);
+  const minY = !isNaN(fromInput) ? fromInput : dataMinY;
+  const maxY = !isNaN(toInput)   ? toInput   : dataMaxY;
+  if (minY >= maxY) { toast("Year From must be less than Year To.", "error"); btn.disabled = false; btn.innerHTML = `<span>Generate Unified Chart</span>`; return; }
+  const years = [];
+  for (let y = minY; y <= maxY; y++) years.push(y);
+
+  const interp = document.getElementById("interpMode").value;
+  const fn = { linear: interpolateLinear, cagr: interpolateCAGR, raw: rawOnly }[interp];
+
+  let datasets;
+
+  if (viewMode === "unified") {
+    // Merge all points from all sources into one dataset
+    const allPoints = activeSources.flatMap(src =>
+      src.points.map(p => ({ ...p, _color: src.color, _source: src.name || `Source ${src.id}` }))
+    );
+    // For duplicate years, average the values
+    const byYear = {};
+    allPoints.forEach(p => {
+      if (!byYear[p.year]) byYear[p.year] = { values: [], colors: [], sources: [] };
+      byYear[p.year].values.push(p.value);
+      byYear[p.year].colors.push(p._color);
+      byYear[p.year].sources.push(p._source);
+    });
+    const mergedPoints = Object.entries(byYear).map(([year, d]) => ({
+      year: parseInt(year),
+      value: d.values.reduce((a,b) => a+b, 0) / d.values.length,
+      unit: allPoints.find(p => p.year === parseInt(year))?.unit || "",
+      label: d.sources.join(" + "),
+      _colors: d.colors,
+    })).sort((a,b) => a.year - b.year);
+
+    const vals = fn(mergedPoints, years);
+
+    // Per-point colors: for interpolated years use accent, for source years use that source's color
+    const knownYearMap = {};
+    mergedPoints.forEach(p => { knownYearMap[p.year] = p._colors; });
+    const pointColors = years.map(y => {
+      if (knownYearMap[y]) return knownYearMap[y].length === 1 ? knownYearMap[y][0] : "#ffffff";
+      return "rgba(200,240,96,0.3)";
+    });
+    const pointRadii = years.map(y => knownYearMap[y] ? 6 : 3);
+
+    datasets = [{
+      label: "Unified",
+      data: chartType === "scatter"
+        ? mergedPoints.map(p => ({ x: p.year, y: p.value }))
+        : vals,
+      borderColor: "rgba(200,240,96,0.8)",
+      backgroundColor: "rgba(200,240,96,0.08)",
+      pointBackgroundColor: pointColors,
+      pointRadius: pointRadii,
+      pointHoverRadius: 8,
+      tension: 0.35,
+      fill: false,
+      spanGaps: true,
+    }];
+  } else {
+    // Compare mode: one line per source (original behavior)
+    datasets = activeSources.map(src => {
+      const vals = fn(src.points, years);
+      return {
+        label: src.name || `Source ${src.id}`,
+        data: chartType === "scatter"
+          ? src.points.map(p => ({ x: p.year, y: p.value }))
+          : vals,
+        borderColor: src.color,
+        backgroundColor: src.color + "26",
+        pointBackgroundColor: src.color,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        tension: 0.35,
+        fill: false,
+        spanGaps: true,
+      };
+    });
+  }
+
+  // AI analysis
+  let analysis = "";
+  let suggestedTitle = document.getElementById("chartTitle").value;
+  try {
+    const interpLabel = { linear: "linear interpolation", cagr: "CAGR projection", raw: "raw data points only" }[document.getElementById("interpMode").value];
+    const summaryText = activeSources.map(s => {
+      const pub = s.publisher ? `${s.publisher}` : s.name;
+      const title = s.articleTitle ? `"${s.articleTitle}"` : "(untitled)";
+      const pts = s.points.map(p=>`${p.year}: ${p.value}${p.unit}`).join(", ");
+      return `- ${pub} ${title}: ${pts}`;
+    }).join("\n");
+
+    const analysisResp = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-calls": "true"
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 512,
+        system: `You are a market intelligence analyst. Write exactly 2 sentences (max 45 words total): (1) which sources provided which data points and how gaps were filled; (2) a brief justification for why combining these sources is valid — e.g. shared metric definition, same market segment, complementary time coverage. Be specific and factual, no filler. Produce ONLY valid JSON (no fences): {"analysis":"two sentences","title":"concise chart title"}`,
+        messages: [{
+          role: "user",
+          content: `Chart mode: ${viewMode === "unified" ? "Unified single line combining all sources" : "Comparative lines per source"}\nInterpolation: ${interpLabel}\nMetric: ${document.getElementById("metricType").value}\nUnit: ${document.getElementById("unitScale").value}\nSources and data points:\n${summaryText}`
+        }]
+      })
+    });
+    if (analysisResp.ok) {
+      const aData = await analysisResp.json();
+      const parsed = robustParse(aData.content?.[0]?.text || "");
+      if (parsed) {
+        analysis = parsed.analysis || "";
+        if (!document.getElementById("chartTitle").value && parsed.title) {
+          suggestedTitle = parsed.title;
+          document.getElementById("chartTitle").value = parsed.title;
+        } else if (parsed.title && !document.getElementById("chartTitle").value) {
+          suggestedTitle = parsed.title;
+        }
+      }
+    }
+  } catch(e) { console.warn("Analysis call failed:", e); }
+
+  renderChart({ years, datasets, title: suggestedTitle || "Market Intelligence Chart", analysis, activeSources });
+
+  btn.disabled = false;
+  btn.innerHTML = `<span>Generate Unified Chart</span>`;
+  toast("Chart generated!", "success", 2000);
+}
+
+function getThemeColors() {
+  if (chartTheme === "light") return { bg: "#ffffff", surface: "#f5f7fa", text: "#1a1d23", muted: "#6b7280", grid: "#e5e7eb" };
+  return { bg: "#0d0f12", surface: "#1e2229", text: "#e8eaf0", muted: "#7a8090", grid: "#2a2f3a" };
+}
+
+function renderChart({ years, datasets, title, analysis, activeSources }) {
+  const area = document.getElementById("chart-area");
+  area.innerHTML = "";
+
+  const card = document.createElement("div");
+  card.className = "chart-card";
+
+  // Store render params for theme re-render
+  card._renderParams = { years, datasets, title, analysis, activeSources };
+
+  // Header
+  const hdr = document.createElement("div");
+  hdr.className = "chart-card-header";
+
+  const titleWrap = document.createElement("div");
+  titleWrap.style.flex = "1";
+  const h2 = document.createElement("h2");
+  h2.textContent = title;
+  titleWrap.appendChild(h2);
+
+  // Subtitle: unit label + year range
+  const unitScaleVal = document.getElementById("unitScale").value;
+  const unitSubtitle = { B:"USD billions", M:"USD millions", T:"USD trillions", pct:"Percent (%)", raw:"Units" }[unitScaleVal] || "";
+  const yearFrom = parseInt(document.getElementById("yearFrom").value);
+  const yearTo   = parseInt(document.getElementById("yearTo").value);
+  const dataYears = activeSources.flatMap(s => s.points.map(p => p.year));
+  const subtitleYearFrom = !isNaN(yearFrom) ? yearFrom : Math.min(...dataYears);
+  const subtitleYearTo   = !isNaN(yearTo)   ? yearTo   : Math.max(...dataYears);
+  const subtitle = document.createElement("div");
+  subtitle.className = "chart-subtitle";
+  subtitle.textContent = `${unitSubtitle}  ·  ${subtitleYearFrom}–${subtitleYearTo}`;
+  titleWrap.appendChild(subtitle);
+
+  hdr.appendChild(titleWrap);
+
+  // Action buttons
+  const actions = document.createElement("div");
+  actions.className = "chart-actions";
+  actions.innerHTML = `
+    <button class="chart-action-btn" id="themeToggleBtn" title="Toggle light/dark background">☀️ Light</button>
+    <button class="chart-action-btn" id="copyImgBtn" title="Copy image — paste into Google Slides with Ctrl+V / ⌘V">Copy image</button>
+    <button class="chart-action-btn" id="downloadBtn" title="Download as PNG">↓ PNG</button>
+    <button class="chart-action-btn" id="pptxBtn" title="Export as editable chart for Google Slides / PowerPoint">↓ PPTX</button>
+  `;
+  hdr.appendChild(actions);
+  card.appendChild(hdr);
+
+  // Canvas
+  const canvasWrap = document.createElement("div");
+  canvasWrap.className = "chart-canvas-wrap";
+  const canvas = document.createElement("canvas");
+  canvas.id = "myChart";
+  canvasWrap.appendChild(canvas);
+  card.appendChild(canvasWrap);
+
+  area.appendChild(card);
+
+  // Destroy old instance
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+
+  const unitScale = document.getElementById("unitScale").value;
+  const unitLabel = { B:"$B", M:"$M", T:"$T", pct:"%", raw:"" }[unitScale] || "";
+  const tc = getThemeColors();
+
+  // Apply theme to canvas wrapper background
+  canvasWrap.style.background = tc.bg;
+  canvasWrap.style.borderRadius = "0";
+
+  const cfg = {
+    type: chartType === "scatter" ? "scatter" : chartType,
+    data: { labels: chartType === "scatter" ? undefined : years, datasets },
+    options: {
+      responsive: true,
+      animation: { duration: 500 },
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: {
+          labels: { color: tc.text, font: { family: "'DM Mono', monospace", size: 11 }, boxWidth: 12, padding: 16 }
+        },
+        tooltip: {
+          backgroundColor: tc.surface,
+          borderColor: tc.grid,
+          borderWidth: 1,
+          titleColor: tc.text,
+          bodyColor: tc.muted,
+          titleFont: { family: "'Instrument Sans', sans-serif", weight: "600", size: 13 },
+          bodyFont: { family: "'DM Mono', monospace", size: 11 },
+          callbacks: {
+            label: ctx => {
+              const v = ctx.parsed.y ?? ctx.parsed;
+              if (v == null) return null;
+              return ` ${ctx.dataset.label}: ${typeof v === "number" ? v.toFixed(2) : v}${unitLabel}`;
+            }
+          }
+        }
+      },
+      scales: chartType === "scatter" ? {
+        x: {
+          type: "linear",
+          title: { display: true, text: "Year", color: tc.muted, font: { family: "'DM Mono',monospace", size: 11 } },
+          ticks: { color: tc.muted, font: { family: "'DM Mono',monospace", size: 11 }, stepSize: 1 },
+          grid: { color: tc.grid }
+        },
+        y: {
+          title: { display: !!unitLabel, text: unitLabel, color: tc.muted, font: { family: "'DM Mono',monospace", size: 11 } },
+          ticks: { color: tc.muted, font: { family: "'DM Mono',monospace", size: 11 } },
+          grid: { color: tc.grid }
+        }
+      } : {
+        x: {
+          ticks: { color: tc.muted, font: { family: "'DM Mono',monospace", size: 11 } },
+          grid: { color: tc.grid }
+        },
+        y: {
+          title: { display: !!unitLabel, text: unitLabel, color: tc.muted, font: { family: "'DM Mono',monospace", size: 11 } },
+          ticks: { color: tc.muted, font: { family: "'DM Mono',monospace", size: 11 }, callback: v => `${v}${unitLabel}` },
+          grid: { color: tc.grid }
+        }
+      }
+    }
+  };
+
+  chartInstance = new Chart(canvas, cfg);
+
+  // ── Chart action buttons ──────────────────────────────────────────────────
+  function exportCanvas(bgColor) {
+    const tmp = document.createElement("canvas");
+    tmp.width  = canvas.width;
+    tmp.height = canvas.height;
+    const ctx2 = tmp.getContext("2d");
+    ctx2.fillStyle = bgColor;
+    ctx2.fillRect(0, 0, tmp.width, tmp.height);
+    ctx2.drawImage(canvas, 0, 0);
+    return tmp;
+  }
+
+  card.querySelector("#themeToggleBtn").addEventListener("click", () => {
+    chartTheme = chartTheme === "dark" ? "light" : "dark";
+    const p = card._renderParams;
+    if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+    renderChart(p);
+  });
+
+  card.querySelector("#copyImgBtn").addEventListener("click", async () => {
+    const bg = chartTheme === "light" ? "#ffffff" : "#0d0f12";
+    const tmp = exportCanvas(bg);
+    tmp.toBlob(async blob => {
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+        toast("Chart copied! Paste with ⌘V in Google Slides, Keynote, or anywhere.", "success", 3500);
+      } catch(e) {
+        toast("Copy failed — try Download instead.", "error");
+      }
+    }, "image/png");
+  });
+
+  card.querySelector("#downloadBtn").addEventListener("click", () => {
+    const bg = chartTheme === "light" ? "#ffffff" : "#0d0f12";
+    const tmp = exportCanvas(bg);
+    const a = document.createElement("a");
+    a.href = tmp.toDataURL("image/png");
+    a.download = `${title.replace(/\s+/g,"_")}.png`;
+    a.click();
+    toast("PNG downloaded.", "success", 2000);
+  });
+
+  card.querySelector("#pptxBtn").addEventListener("click", () => exportPptx({ years, datasets, title, activeSources }));
+
+  // Update theme toggle button label
+  const themeBtn = card.querySelector("#themeToggleBtn");
+  if (themeBtn) themeBtn.textContent = chartTheme === "dark" ? "☀️ Light" : "🌙 Dark";
+
+  // Insight strip
+  if (analysis) {
+    const strip = document.createElement("div");
+    strip.className = "insight-strip";
+    strip.innerHTML = `<strong>Methodology Note</strong><br>${esc(analysis)}`;
+    card.appendChild(strip);
+  }
+
+  // Citations block
+  const cits = document.createElement("div");
+  cits.className = "citations-block";
+
+  const citsHdr = document.createElement("div");
+  citsHdr.className = "citations-header";
+  citsHdr.innerHTML = `<span class="citations-title">Sources & Citations</span><button class="copy-citations-btn">Copy citations</button>`;
+  cits.appendChild(citsHdr);
+
+  const citList = document.createElement("div");
+  citList.className = "citation-list";
+
+  const apaLines = [];
+  activeSources.forEach((src, idx) => {
+    const cc = document.createElement("div");
+    cc.className = "citation-card";
+
+    // Build APA-style citation
+    const publisher  = src.publisher   || src.name || "Unknown Publisher";
+    const title      = src.articleTitle || "Untitled Report";
+    const pubYear    = src.year         || "n.d.";
+    const dataStr    = src.points.map(p => `${p.year}: ${formatVal(p.value, p.unit)}`).join(", ");
+    // APA format: Publisher. (Year). Title. [Data points: ...]
+    const apaText = `${publisher}. (${pubYear}). <em>${title}</em>. [Extracted data: ${dataStr}]`;
+    apaLines.push(`[${idx+1}] ${publisher}. (${pubYear}). ${title}. [Extracted data: ${dataStr}]`);
+
+    cc.innerHTML = `
+      <div class="citation-dot" style="background:${src.color}"></div>
+      <div class="citation-body">
+        <div class="citation-apa">[${idx+1}] ${apaText}</div>
+        <div class="citation-points">${src.points.map(p=>`${p.year}: ${formatVal(p.value, p.unit)}`).join("  ·  ")}</div>
+      </div>
+    `;
+    citList.appendChild(cc);
+  });
+  cits.appendChild(citList);
+
+  // Copy button
+  citsHdr.querySelector(".copy-citations-btn").addEventListener("click", () => {
+    navigator.clipboard.writeText(apaLines.join("\n")).then(() => toast("Citations copied to clipboard.", "success", 2000));
+  });
+
+  card.appendChild(cits);
+}
+
+// ── PPTX EXPORT ──────────────────────────────────────────────────────────────
+async function exportPptx({ years, datasets, title, activeSources }) {
+  if (typeof PptxGenJS === "undefined") {
+    toast("PptxGenJS not loaded yet — try again in a moment.", "error"); return;
+  }
+
+  const pptx = new PptxGenJS();
+  pptx.layout = "LAYOUT_WIDE"; // 13.33 x 7.5 inches (widescreen 16:9)
+
+  const slide = pptx.addSlide();
+
+  // Background
+  slide.background = { color: "0D0F12" };
+
+  // Title
+  slide.addText(title, {
+    x: 0.4, y: 0.25, w: 12.5, h: 0.55,
+    fontSize: 28, bold: true, color: "E8EAF0",
+    fontFace: "Georgia",
+  });
+
+  // Subtitle (unit + year range)
+  const unitScaleVal = document.getElementById("unitScale").value;
+  const unitSubtitle = { B:"USD billions", M:"USD millions", T:"USD trillions", pct:"Percent (%)", raw:"Units" }[unitScaleVal] || "";
+  const subtitleText = `${unitSubtitle}  ·  ${Math.min(...years)}–${Math.max(...years)}`;
+  slide.addText(subtitleText, {
+    x: 0.4, y: 0.82, w: 12.5, h: 0.28,
+    fontSize: 11, color: "7A8090", fontFace: "Courier New",
+  });
+
+  // Build chart data for PptxGenJS
+  // PptxGenJS line/bar chart format: [{ name, labels, values }]
+  const pptxChartType = chartType === "bar" ? pptx.ChartType.bar : pptx.ChartType.line;
+
+  const chartData = datasets.map(ds => ({
+    name:   ds.label,
+    labels: years.map(String),
+    values: (ds.data || []).map(v => v == null ? 0 : parseFloat(v.toFixed(2))),
+  }));
+
+  const sourceColors = activeSources.map(s => s.color.replace("#",""));
+  const seriesColors = datasets.map((ds, i) =>
+    (ds.borderColor || SOURCE_COLORS[i] || "#c8f060").replace("#","")
+  );
+
+  slide.addChart(pptxChartType, chartData, {
+    x: 0.4, y: 1.15, w: 12.5, h: 5.5,
+    chartColors: seriesColors,
+    showLegend: true,
+    legendPos: "t",
+    legendFontSize: 10,
+    legendColor: "E8EAF0",
+    showTitle: false,
+    valAxisLabelColor: "7A8090",
+    catAxisLabelColor: "7A8090",
+    valGridLine: { style: "solid", color: "2A2F3A" },
+    dataLabelFontSize: 9,
+    lineDataSymbol: "circle",
+    lineDataSymbolSize: 6,
+    lineSmooth: false,
+  });
+
+  // Methodology note as footer text (if available)
+  const insightEl = document.querySelector(".insight-strip");
+  if (insightEl) {
+    const noteText = insightEl.innerText.replace("Methodology Note\n","").trim();
+    slide.addText(noteText, {
+      x: 0.4, y: 6.9, w: 12.5, h: 0.45,
+      fontSize: 8, color: "7A8090", fontFace: "Courier New", italic: true,
+    });
+  }
+
+  const fileName = `${title.replace(/\s+/g,"_")}_Signal.pptx`;
+  await pptx.writeFile({ fileName });
+  toast("PPTX exported — open in Google Slides for a fully editable chart.", "success", 4000);
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function esc(s = "") {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function formatVal(value, unit) {
+  if (unit === "%" || unit === "pct") return `${value}%`;
+  if (unit === "B") return `$${value}B`;
+  if (unit === "M") return `$${value}M`;
+  if (unit === "T") return `$${value}T`;
+  return `${value}`;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.getElementById("setApiKeyBtn").addEventListener("click", () => {
+  const existing = getApiKey();
+  const key = prompt("Enter your Anthropic API key (stored locally in this browser):", existing ? existing : "");
+  if (key == null) return; // cancelled
+  const trimmed = key.trim();
+  if (!trimmed) { toast("API key cleared.", "info"); localStorage.removeItem(API_KEY_STORAGE_KEY); return; }
+  setApiKey(trimmed);
+  toast("API key saved in this browser.", "success", 2200);
+});
+document.getElementById("addSourceBtn").addEventListener("click", addSource);
+addSource(); // Start with one source
+</script>
+</body>
+</html>
